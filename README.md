@@ -1,0 +1,2 @@
+# geistergangbot
+Der GeisterGang-Bot
