@@ -1,12 +1,23 @@
 const { Client, RichEmbed, SnowflakeUtil } = require("discord.js")
 const client = new Client()
-const cfg = require("./cfg") || require("./cfg_E")
+const cfg = require("./cfg")
 
 class GeisterEmbed extends RichEmbed {
     constructor() {
         super()
         this.color = new cfg.color().generatedColor
     }
+}
+
+String.prototype.capitalize = function () {
+    return this.charAt(0).toUpperCase() + this.slice(1)
+}
+
+const clean = text => {
+    if (typeof (text) === "string")
+        return text.replace(/`/g, "`" + String.fromCharCode(8203)).replace(/@/g, "@" + String.fromCharCode(8203));
+    else
+        return text;
 }
 
 client.on('message', async (message) => {
@@ -20,22 +31,43 @@ client.on('message', async (message) => {
 
         message.channel.fetchMessages({ limit: 100 })
 
-        var msg = await message.channel.fetchMessage(args[0])
-        var attachments = ""
-        var i = 0
+        const msg = await message.channel.fetchMessage(args[0])
+        let attachments = ""
         for (let attachment of msg.attachments) {
-            ++i
-            attachments += "\n[Anhang](" + attachment[1].url + ")"
+            attachments += "[Anhang](" + attachment[1].url + ")\n"
         }
-        var embedPin = new GeisterEmbed()
+        const embedPin = new GeisterEmbed()
             .setTitle("<:gg_pin:597485983910461472> " + msg.member.displayName)
-            .setDescription(msg.content + `\n\n${attachments}\n[Original](https://discordapp.com/channels/${msg.guild.id}/${msg.channel.id}/${msg.id})`)
+            .setDescription(msg.content + `\n\n${attachments}[Original](https://discordapp.com/channels/${msg.guild.id}/${msg.channel.id}/${msg.id})`)
         client.channels.get(cfg.pinChannel).send(embedPin)
-        var m = await message.channel.send("<:gg_pin:597485983910461472>")
-        // message.channel.send(embedPin)
+        const m = await message.channel.send("<:gg_pin:597485983910461472>")
         setTimeout(() => {
             m.delete()
         }, 5000);
+    } else if (command === "help") {
+        message.channel.send("Geheim! Aber ich bin Open-Source: https://github.com/spVierSechs/geistergangbot")
+    } else if (command === "eval") {
+        try {
+            const code = args.join(" ");
+            let evaled = eval(code);
+
+            if (typeof evaled !== "string")
+                evaled = require("util").inspect(evaled);
+
+            message.channel.send(clean(evaled), { code: "js" });
+        } catch (err) {
+            message.channel.send(`Hmm, \`\`\`js\n${clean(err)}\n\`\`\``);
+        }
+    } else if (command === "geist") {
+        try {
+            message.member.removeRole("540856179195379723")
+            message.member.addRole("540856027407450112")
+            message.reply("Willkommen zum Geister-Clan.")
+        } catch(e) {
+            message.reply("Ein Fehler ist aufgetreten. Bist du bereits Geist?")
+            message.channel.send(e, {code:"js",split:true})
+        }
+        
     }
 })
 
